@@ -1,0 +1,12 @@
+# Runtime + ML. Pinned below TF 2.16 so `tf.keras` stays Keras 2 and the notebook's
+# ImageDataGenerator training pipeline (export_weights.py) keeps working.
+# NOTE: this TensorFlow range supports Python 3.9-3.11 only (not 3.12+).
+tensorflow>=2.13,<2.16
+pillow
+numpy
+
+# Used only by export_weights.py (balanced class weights).
+scikit-learn
+
+# Tests.
+pytest
