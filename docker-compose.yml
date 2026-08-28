@@ -1,0 +1,24 @@
+# Local infrastructure for MedLens.
+# Milestone 3 adds only the database. The `backend` and `frontend` services arrive in
+# Milestone 7 and will declare `depends_on: { db: { condition: service_healthy } }` so
+# they wait for the healthcheck below.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: medlens
+      POSTGRES_PASSWORD: medlens
+      POSTGRES_DB: medlens
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medlens -d medlens"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
