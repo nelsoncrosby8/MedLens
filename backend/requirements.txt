@@ -1,5 +1,10 @@
-# Runtime + ML. Pinned below TF 2.16 so `tf.keras` stays Keras 2 and the notebook's
-# ImageDataGenerator training pipeline (export_weights.py) keeps working.
+# Web framework / API
+fastapi
+uvicorn[standard]        # [standard] pulls in watchfiles so `uvicorn --reload` works
+python-multipart         # required by FastAPI to parse multipart/form-data uploads
+
+# ML / inference. TensorFlow held below 2.16 so `tf.keras` stays Keras 2 and the
+# notebook's ImageDataGenerator training pipeline (export_weights.py) keeps working.
 # NOTE: this TensorFlow range supports Python 3.9-3.11 only (not 3.12+).
 tensorflow>=2.13,<2.16
 pillow
@@ -10,3 +15,4 @@ scikit-learn
 
 # Tests.
 pytest
+httpx                    # Starlette/FastAPI TestClient transport
