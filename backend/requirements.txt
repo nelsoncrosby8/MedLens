@@ -3,6 +3,16 @@ fastapi
 uvicorn[standard]        # [standard] pulls in watchfiles so `uvicorn --reload` works
 python-multipart         # required by FastAPI to parse multipart/form-data uploads
 
+# Auth / database
+sqlalchemy
+alembic
+psycopg2-binary          # PostgreSQL driver for SQLAlchemy
+passlib[bcrypt]          # password hashing
+bcrypt<4.1               # passlib 1.7.4 breaks against bcrypt >= 4.1
+python-jose[cryptography]  # JWT encode/decode
+pydantic-settings        # env-driven Settings
+email-validator          # required by pydantic EmailStr in schemas/user.py
+
 # ML / inference. TensorFlow held below 2.16 so `tf.keras` stays Keras 2 and the
 # notebook's ImageDataGenerator training pipeline (export_weights.py) keeps working.
 # NOTE: this TensorFlow range supports Python 3.9-3.11 only (not 3.12+).
