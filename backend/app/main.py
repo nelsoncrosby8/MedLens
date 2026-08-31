@@ -1,7 +1,8 @@
 """MedLens FastAPI application.
 
-Milestones 2-3: serves ``/health``, ``/predict``, and ``/auth`` (signup / login / me).
-Predictions are not persisted and there is no ``/history`` or frontend yet — later milestones.
+Milestones 2-4: serves ``/health``, ``/auth`` (signup / login / me), ``/predict``
+(authenticated — each result is saved to the caller's history), and ``/history``.
+No Grad-CAM heatmap or frontend yet — later milestones.
 
 **Not for clinical use** — educational/portfolio project only.
 """
@@ -11,9 +12,12 @@ from __future__ import annotations
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import auth as auth_api
+from app.api import history as history_api
 from app.api import predict as predict_api
+from app.core.config import get_settings
 from app.ml.model import load_model
 
 DISCLAIMER = (
@@ -38,14 +42,23 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="MedLens API",
-    version="0.3.0",
+    version="0.4.0",
     summary="AI-assisted pneumonia triage from chest X-rays.",
     description=DISCLAIMER,
     lifespan=lifespan,
 )
 
-app.include_router(predict_api.router)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_settings().CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(auth_api.router)
+app.include_router(predict_api.router)
+app.include_router(history_api.router)
 
 
 @app.get("/health", tags=["meta"])
