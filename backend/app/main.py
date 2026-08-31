@@ -1,7 +1,7 @@
 """MedLens FastAPI application.
 
-Milestone 2: serves ``/health`` and ``/predict``. No database, auth, or frontend yet
-— those are later milestones.
+Milestones 2-3: serves ``/health``, ``/predict``, and ``/auth`` (signup / login / me).
+Predictions are not persisted and there is no ``/history`` or frontend yet — later milestones.
 
 **Not for clinical use** — educational/portfolio project only.
 """
@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.api import auth as auth_api
 from app.api import predict as predict_api
 from app.ml.model import load_model
 
@@ -37,13 +38,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="MedLens API",
-    version="0.2.0",
+    version="0.3.0",
     summary="AI-assisted pneumonia triage from chest X-rays.",
     description=DISCLAIMER,
     lifespan=lifespan,
 )
 
 app.include_router(predict_api.router)
+app.include_router(auth_api.router)
 
 
 @app.get("/health", tags=["meta"])
