@@ -1,4 +1,4 @@
-"""``/predict`` — run the pneumonia classifier on an uploaded chest X-ray."""
+"""``/predict`` — classify an uploaded chest X-ray and save the result to the caller's history."""
 
 from __future__ import annotations
 
@@ -7,8 +7,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy.orm import Session
 
+from app.api.auth import get_current_user
+from app.core.db import get_db
 from app.ml.model import predict as run_inference
+from app.models.prediction import Prediction
+from app.models.user import User
 from app.schemas.predict import PredictResponse
 
 router = APIRouter(tags=["prediction"])
@@ -51,15 +56,19 @@ async def _read_within_limit(upload: UploadFile) -> bytes:
 async def predict(
     file: Annotated[UploadFile, File(description="Chest X-ray image (JPEG or PNG, max 5 MB).")],
     model: Annotated[object, Depends(get_model)],
-) -> PredictResponse:
-    """Classify an uploaded chest X-ray as **NORMAL** or **PNEUMONIA**.
+    current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[Session, Depends(get_db)],
+) -> Prediction:
+    """Classify an uploaded chest X-ray as **NORMAL** or **PNEUMONIA** and store the result.
 
-    Send one image as ``multipart/form-data`` under the field name ``file``. The
-    response contains the predicted label and the model's estimated probability of
-    pneumonia (`P(PNEUMONIA)`, the raw sigmoid output).
+    Requires a bearer token. Send one image as ``multipart/form-data`` under the field name
+    ``file``. The response contains the stored prediction's ``id``, the predicted ``label``,
+    the model's estimated probability of pneumonia (`P(PNEUMONIA)`, the raw sigmoid output),
+    and ``created_at``. The prediction is saved to the caller's history (see ``GET /history``).
 
     Errors:
     - **400** — the upload is missing, empty, or not a decodable image.
+    - **401** — missing or invalid bearer token.
     - **413** — the upload exceeds the 5 MB limit.
 
     **Not for clinical use** — educational/portfolio project only.
@@ -88,4 +97,14 @@ async def predict(
         ) from exc
 
     result = run_inference(image, model=model)
-    return PredictResponse(**result)
+
+    record = Prediction(
+        user_id=current_user.id,
+        label=result["label"],
+        probability=result["probability"],
+        filename=file.filename,
+    )
+    db.add(record)
+    db.commit()
+    db.refresh(record)
+    return record

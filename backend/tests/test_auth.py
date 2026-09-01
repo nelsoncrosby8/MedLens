@@ -1,45 +1,12 @@
 """Auth API tests (signup / login / JWT-protected route).
 
-Runs against a fresh in-memory SQLite database per test — isolated from dev data and
-fast. ``get_db`` is overridden; ``TestClient(app)`` is used without the ``with`` block so
-the model-loading lifespan never runs (these tests don't touch the CNN).
+Uses the shared ``client`` fixture (fresh in-memory SQLite, ``get_db`` overridden).
 """
-
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
-from app.core.db import Base, get_db
-from app.main import app
 
 SIGNUP = {"email": "alice@example.com", "password": "correct horse battery"}
 
 
-@pytest.fixture
-def client():
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,  # one shared connection => schema persists for the test
-    )
-    Base.metadata.create_all(engine)
-    TestingSession = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
-
-    def override_get_db():
-        db = TestingSession()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    yield TestClient(app)
-    app.dependency_overrides.clear()
-
-
-def _token(client) -> str:
+def _login_token(client) -> str:
     client.post("/auth/signup", json=SIGNUP)
     resp = client.post(
         "/auth/login",
@@ -100,7 +67,7 @@ def test_me_with_invalid_token_returns_401(client):
 
 
 def test_me_with_valid_token_returns_user(client):
-    resp = client.get("/auth/me", headers={"Authorization": f"Bearer {_token(client)}"})
+    resp = client.get("/auth/me", headers={"Authorization": f"Bearer {_login_token(client)}"})
 
     assert resp.status_code == 200
     assert resp.json()["email"] == SIGNUP["email"]

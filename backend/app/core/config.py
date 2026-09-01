@@ -23,6 +23,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Origins allowed to call the API from a browser (the Vite/React dev servers by default).
+    # Override from the environment with a JSON array, e.g. '["https://medlens.example"]'.
+    CORS_ORIGINS: list[str] = ["http://localhost:5173", "http://localhost:3000"]
+
 
 @lru_cache
 def get_settings() -> Settings:
