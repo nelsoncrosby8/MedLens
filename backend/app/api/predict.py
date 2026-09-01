@@ -58,13 +58,15 @@ async def predict(
     model: Annotated[object, Depends(get_model)],
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> Prediction:
+) -> PredictResponse:
     """Classify an uploaded chest X-ray as **NORMAL** or **PNEUMONIA** and store the result.
 
     Requires a bearer token. Send one image as ``multipart/form-data`` under the field name
     ``file``. The response contains the stored prediction's ``id``, the predicted ``label``,
     the model's estimated probability of pneumonia (`P(PNEUMONIA)`, the raw sigmoid output),
-    and ``created_at``. The prediction is saved to the caller's history (see ``GET /history``).
+    ``created_at``, and ``heatmap`` — a Grad-CAM overlay as a base64 PNG data URI. The label,
+    probability, and filename are saved to the caller's history (see ``GET /history``); the
+    heatmap is recomputed per request and not stored.
 
     Errors:
     - **400** — the upload is missing, empty, or not a decodable image.
@@ -96,7 +98,7 @@ async def predict(
             detail="Uploaded file is not a readable image.",
         ) from exc
 
-    result = run_inference(image, model=model)
+    result = run_inference(image, model=model, with_heatmap=True)
 
     record = Prediction(
         user_id=current_user.id,
@@ -107,4 +109,11 @@ async def predict(
     db.add(record)
     db.commit()
     db.refresh(record)
-    return record
+
+    return PredictResponse(
+        id=record.id,
+        label=record.label,
+        probability=record.probability,
+        created_at=record.created_at,
+        heatmap=result["heatmap"],
+    )
