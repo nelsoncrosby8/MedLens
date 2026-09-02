@@ -5,10 +5,12 @@ fixtures (in-memory SQLite) plus a fast untrained model via ``override_model``. 
 test opts into the real trained weights when the file is present.
 """
 
+import base64
 import io
 from pathlib import Path
 
 import pytest
+from PIL import Image
 
 from app.api.predict import get_model
 from app.main import app
@@ -19,6 +21,12 @@ DATA_DIR = Path(__file__).parent / "data"
 PNEUMONIA_SAMPLE = DATA_DIR / "pneumonia_sample.jpeg"
 
 _UNTRAINED_MODEL = None
+
+
+def _assert_jpeg_data_uri(value: str) -> None:
+    assert value.startswith("data:image/jpeg;base64,")
+    decoded = Image.open(io.BytesIO(base64.b64decode(value.split(",", 1)[1])))
+    assert decoded.format == "JPEG"
 
 
 @pytest.fixture
@@ -63,6 +71,7 @@ def test_predict_valid_image_returns_200_and_persists(auth_client, db_session):
     assert 0.0 <= body["probability"] <= 1.0
     assert isinstance(body["id"], int)
     assert body["created_at"]
+    _assert_jpeg_data_uri(body["heatmap"])
 
     rows = db_session.query(Prediction).all()
     assert len(rows) == 1
@@ -72,8 +81,6 @@ def test_predict_valid_image_returns_200_and_persists(auth_client, db_session):
 
 
 def test_predict_accepts_generated_png(auth_client):
-    from PIL import Image
-
     buf = io.BytesIO()
     Image.new("L", (128, 96), color=90).save(buf, format="PNG")
     response = auth_client.post(
@@ -126,4 +133,5 @@ def test_predict_with_real_weights_classifies_pneumonia(client, db_session, make
     body = response.json()
     assert body["label"] == "PNEUMONIA"
     assert body["probability"] > 0.5
+    _assert_jpeg_data_uri(body["heatmap"])
     assert db_session.query(Prediction).count() == 1

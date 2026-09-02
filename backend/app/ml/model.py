@@ -102,20 +102,35 @@ def _get_model() -> keras.Model:
     return _MODEL
 
 
-def predict(image: Image.Image, model: keras.Model | None = None) -> dict[str, object]:
+def predict(
+    image: Image.Image,
+    model: keras.Model | None = None,
+    *,
+    with_heatmap: bool = False,
+) -> dict[str, object]:
     """Classify a single chest X-ray.
 
     Args:
         image: the X-ray as a PIL image (any mode/size — it is normalised here).
         model: an optional pre-built model. When omitted, a lazily-loaded singleton
             backed by the trained weights file is used.
+        with_heatmap: also compute a Grad-CAM overlay and include it under
+            ``"heatmap"`` as a base64 PNG ``data:`` URI.
 
     Returns:
-        ``{"label": "NORMAL" | "PNEUMONIA", "probability": <float>}`` where
-        ``probability`` is always P(PNEUMONIA), the raw sigmoid output — not the
-        confidence of the returned label.
+        ``{"label": "NORMAL" | "PNEUMONIA", "probability": <float>}`` (plus
+        ``"heatmap"`` when requested) where ``probability`` is always P(PNEUMONIA),
+        the raw sigmoid output — not the confidence of the returned label.
     """
     model = model if model is not None else _get_model()
-    prob_pneumonia = float(model.predict(preprocess(image), verbose=0)[0][0])
-    label = CLASS_NAMES[int(prob_pneumonia > DECISION_THRESHOLD)]
-    return {"label": label, "probability": prob_pneumonia}
+    batch = preprocess(image)
+    prob_pneumonia = float(model.predict(batch, verbose=0)[0][0])
+    result: dict[str, object] = {
+        "label": CLASS_NAMES[int(prob_pneumonia > DECISION_THRESHOLD)],
+        "probability": prob_pneumonia,
+    }
+    if with_heatmap:
+        from app.ml.gradcam import overlay_data_uri  # lazy: keeps matplotlib off the hot path
+
+        result["heatmap"] = overlay_data_uri(model, batch, image)
+    return result

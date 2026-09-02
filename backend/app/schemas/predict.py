@@ -25,6 +25,14 @@ class PredictResponse(BaseModel):
         ..., ge=0.0, le=1.0, description=_PROBABILITY_DESCRIPTION, examples=[0.9137]
     )
     created_at: datetime = Field(..., description="When the prediction was made (UTC).")
+    heatmap: str = Field(
+        ...,
+        description=(
+            "Grad-CAM overlay (the model's attention blended over the X-ray) as a "
+            "base64 JPEG data URI. Not stored — recomputed per request, absent from GET /history."
+        ),
+        examples=["data:image/jpeg;base64,/9j/4AAQSkZJRg..."],
+    )
 
 
 class PredictionRead(BaseModel):

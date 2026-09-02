@@ -19,6 +19,7 @@ email-validator          # required by pydantic EmailStr in schemas/user.py
 tensorflow>=2.13,<2.16
 pillow
 numpy
+matplotlib               # 'jet' colormap for the Grad-CAM overlay (app/ml/gradcam.py)
 
 # Used only by export_weights.py (balanced class weights).
 scikit-learn
