@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/useAuth'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -17,14 +17,17 @@ export function HistoryPage() {
   const [error, setError] = useState<string | null>(null)
   const [atEnd, setAtEnd] = useState(false)
 
-  function handleError(err: unknown) {
-    if (err instanceof ApiError && err.status === 401) {
-      logout()
-      navigate('/login', { replace: true })
-      return
-    }
-    setError(err instanceof ApiError ? err.detail : 'Could not load your history.')
-  }
+  const handleError = useCallback(
+    (err: unknown) => {
+      if (err instanceof ApiError && err.status === 401) {
+        logout()
+        navigate('/login', { replace: true })
+        return
+      }
+      setError(err instanceof ApiError ? err.detail : 'Could not load your history.')
+    },
+    [logout, navigate],
+  )
 
   useEffect(() => {
     if (!token) return
@@ -45,7 +48,7 @@ export function HistoryPage() {
     return () => {
       cancelled = true
     }
-  }, [token])
+  }, [token, handleError])
 
   async function onLoadMore() {
     if (!token) return
