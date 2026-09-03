@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -26,7 +26,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
 
 def create_access_token(subject: str, expires_delta: timedelta | None = None) -> str:
     """Encode a signed JWT whose ``sub`` claim is ``subject`` (here: the user's email)."""
-    expire = datetime.now(timezone.utc) + (
+    expire = datetime.now(UTC) + (
         expires_delta or timedelta(minutes=_settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     )
     payload = {"sub": subject, "exp": expire}

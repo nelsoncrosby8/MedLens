@@ -12,9 +12,7 @@ from app.core.config import get_settings
 _settings = get_settings()
 
 # check_same_thread only matters for SQLite (used by the test suite); harmless to compute here.
-_connect_args = (
-    {"check_same_thread": False} if _settings.DATABASE_URL.startswith("sqlite") else {}
-)
+_connect_args = {"check_same_thread": False} if _settings.DATABASE_URL.startswith("sqlite") else {}
 
 engine = create_engine(
     _settings.DATABASE_URL,

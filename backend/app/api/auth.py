@@ -10,7 +10,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
-from app.core.security import create_access_token, decode_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    decode_access_token,
+    hash_password,
+    verify_password,
+)
 from app.models.user import User
 from app.schemas.user import Token, UserCreate, UserRead
 

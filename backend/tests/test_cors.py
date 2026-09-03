@@ -1,7 +1,8 @@
 """CORS is enabled so the browser frontend (another origin) can call the API."""
 
-from app.main import app
 from fastapi.testclient import TestClient
+
+from app.main import app
 
 ORIGIN = "http://localhost:5173"
 

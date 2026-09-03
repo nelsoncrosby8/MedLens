@@ -69,19 +69,27 @@ def build_generators(data_dir: Path):
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--data-dir",
         type=Path,
         default=Path.home() / "Downloads" / "chest_xray",
         help="Kaggle chest_xray dataset root (must contain train/NORMAL and train/PNEUMONIA).",
     )
-    parser.add_argument("--epochs", type=int, default=30, help="Max training epochs (early stopping applies).")
-    parser.add_argument("--out", type=Path, default=DEFAULT_WEIGHTS_PATH, help="Where to write the weights file.")
+    parser.add_argument(
+        "--epochs", type=int, default=30, help="Max training epochs (early stopping applies)."
+    )
+    parser.add_argument(
+        "--out", type=Path, default=DEFAULT_WEIGHTS_PATH, help="Where to write the weights file."
+    )
     args = parser.parse_args()
 
     if not (args.data_dir / "train").is_dir():
-        parser.error(f"{args.data_dir / 'train'} not found — pass --data-dir pointing at the dataset root.")
+        parser.error(
+            f"{args.data_dir / 'train'} not found — pass --data-dir pointing at the dataset root."
+        )
 
     np.random.seed(SEED)
     tf.random.set_seed(SEED)

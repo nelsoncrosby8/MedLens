@@ -61,9 +61,7 @@ def test_predict_requires_auth(client, override_model):
 
 def test_predict_valid_image_returns_200_and_persists(auth_client, db_session):
     with PNEUMONIA_SAMPLE.open("rb") as fh:
-        response = auth_client.post(
-            "/predict", files={"file": ("xray.jpeg", fh, "image/jpeg")}
-        )
+        response = auth_client.post("/predict", files={"file": ("xray.jpeg", fh, "image/jpeg")})
 
     assert response.status_code == 200
     body = response.json()
@@ -107,9 +105,7 @@ def test_predict_corrupt_image_bytes_returns_400(auth_client):
 
 def test_predict_oversized_file_returns_413(auth_client):
     oversized = b"\x89PNG\r\n\x1a\n" + b"0" * (5 * 1024 * 1024 + 1)
-    response = auth_client.post(
-        "/predict", files={"file": ("big.png", oversized, "image/png")}
-    )
+    response = auth_client.post("/predict", files={"file": ("big.png", oversized, "image/png")})
     assert response.status_code == 413
 
 
@@ -123,9 +119,7 @@ def test_predict_with_real_weights_classifies_pneumonia(client, db_session, make
     app.dependency_overrides[get_model] = lambda: real_model
     try:
         with PNEUMONIA_SAMPLE.open("rb") as fh:
-            response = client.post(
-                "/predict", files={"file": ("xray.jpeg", fh, "image/jpeg")}
-            )
+            response = client.post("/predict", files={"file": ("xray.jpeg", fh, "image/jpeg")})
     finally:
         app.dependency_overrides.pop(get_model, None)
 
