@@ -89,6 +89,26 @@ Point it at a different API with `VITE_API_URL` (see `frontend/.env.example`). O
 `npm run build`, `npm run lint`, `npm run test` (Vitest). The backend's `CORS_ORIGINS`
 already allows `http://localhost:5173`.
 
+### Docker (full stack)
+
+Brings up **db + backend + frontend** with one command (needs Docker, or Colima):
+
+```bash
+docker compose up --build
+```
+
+- frontend → `http://localhost:5173`  •  backend → `http://localhost:8000`  •  db → `localhost:5433`
+- Both app services run their dev servers with the source bind-mounted (hot reload).
+- The backend container runs `alembic upgrade head` on startup.
+- Postgres is published on **5433** so it doesn't collide with a local Postgres on 5432.
+- The backend still needs `backend/app/ml/weights/model.weights.h5` on the host (see above) —
+  it's read through the bind mount, not baked into the image.
+
+`docker compose down` stops it; add `-v` to also drop the database volume.
+
+TensorFlow needs headroom — if you're on Colima, give the VM some RAM:
+`colima start --memory 4`.
+
 ## Data
 
 Only public, de-identified datasets are used (Kaggle Chest X-Ray Pneumonia). No patient data
