@@ -9,10 +9,16 @@ This is a portfolio project — code quality, tests, and real deployability are 
 
 ## Status
 
-Built in milestones (see `CLAUDEmedlens.md`). Current progress:
+Built in milestones (see `CLAUDEmedlens.md`). Done so far:
 
-- **Milestone 1 — in progress:** repository skeleton + inference-only ML module ported from
-  the training notebook (`notebooks/pneumonia_classifier.ipynb`).
+- **1–2** ML inference module + FastAPI service (`/health`, `/predict`).
+- **3** PostgreSQL models, Alembic migrations, JWT auth (`/auth/signup|login|me`).
+- **4** Per-user prediction persistence + `GET /history`; `/predict` now requires auth; CORS.
+- **5** Grad-CAM heatmap in the `/predict` response.
+- **6** React (Vite + TS) frontend: login/signup, X-ray upload, results view with the
+  heatmap, and a history dashboard — all wired to the API.
+
+Next: Docker Compose for the full stack, CI, deployment, README polish.
 
 ## Repository layout
 
@@ -26,7 +32,13 @@ backend/
     models/     SQLAlchemy models — not built yet
     schemas/    Pydantic schemas — not built yet
   tests/        pytest suite (+ sample chest X-ray fixtures under tests/data/)
-frontend/       React (Vite) app — not built yet
+frontend/       React (Vite + TypeScript) app, organized by feature
+  src/
+    lib/        typed fetch API client + shared types
+    auth/       auth context, login / signup pages
+    upload/     X-ray upload flow + results view (label, probability, heatmap toggle)
+    history/    prediction history dashboard
+    components/ shared UI (nav, disclaimer footer, spinner, …)
 notebooks/      the original model-development notebook
 ```
 
@@ -62,6 +74,20 @@ cd backend && pytest -q
 ```
 
 The weight-dependent test is skipped until you have run `export_weights.py`.
+
+### Frontend
+
+Needs Node 20+ and the backend running on `http://localhost:8000`.
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173
+```
+
+Point it at a different API with `VITE_API_URL` (see `frontend/.env.example`). Other scripts:
+`npm run build`, `npm run lint`, `npm run test` (Vitest). The backend's `CORS_ORIGINS`
+already allows `http://localhost:5173`.
 
 ## Data
 
