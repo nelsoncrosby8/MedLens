@@ -1,5 +1,7 @@
 # MedLens
 
+[![CI](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml/badge.svg)](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml)
+
 A full-stack web app where a user uploads a chest X-ray and receives an AI-assisted
 pneumonia triage result (probability + Grad-CAM heatmap), with accounts and case history.
 This is a portfolio project — code quality, tests, and real deployability are the focus.
@@ -17,8 +19,11 @@ Built in milestones (see `CLAUDEmedlens.md`). Done so far:
 - **5** Grad-CAM heatmap in the `/predict` response.
 - **6** React (Vite + TS) frontend: login/signup, X-ray upload, results view with the
   heatmap, and a history dashboard — all wired to the API.
+- **7** `docker compose up` full local stack (db + backend + frontend, hot reload).
+- **8** GitHub Actions CI — ruff lint/format + pytest (backend), oxlint + build + Vitest
+  (frontend) — on every PR and on `main`.
 
-Next: Docker Compose for the full stack, CI, deployment, README polish.
+Next: deployment, README polish.
 
 ## Repository layout
 
