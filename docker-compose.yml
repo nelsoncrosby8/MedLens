@@ -1,7 +1,11 @@
-# Local infrastructure for MedLens.
-# Milestone 3 adds only the database. The `backend` and `frontend` services arrive in
-# Milestone 7 and will declare `depends_on: { db: { condition: service_healthy } }` so
-# they wait for the healthcheck below.
+# MedLens full local stack — `docker compose up --build`.
+#   db       Postgres 16          host port 5433 (5432 is often taken by a local Postgres)
+#   backend  FastAPI + uvicorn --reload   http://localhost:8000  (source bind-mounted)
+#   frontend Vite dev server              http://localhost:5173  (source bind-mounted)
+#
+# The backend needs a trained weights file at backend/app/ml/weights/model.weights.h5
+# (generate it once with `python -m app.ml.export_weights` — see the README); it is used
+# via the bind mount. The backend entrypoint runs `alembic upgrade head` on startup.
 
 services:
   db:
@@ -11,7 +15,7 @@ services:
       POSTGRES_PASSWORD: medlens
       POSTGRES_DB: medlens
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -20,5 +24,36 @@ services:
       timeout: 5s
       retries: 5
 
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://medlens:medlens@db:5432/medlens
+      SECRET_KEY: dev-only-insecure-change-me
+      CORS_ORIGINS: '["http://localhost:5173"]'
+      MEDLENS_WEIGHTS_PATH: /app/app/ml/weights/model.weights.h5
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - backend_pycache:/app/__pycache__
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8000
+      VITE_DOCKER: "1"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+
 volumes:
   pgdata:
+  backend_pycache:
+  frontend_node_modules:
