@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.env
+*.md
+
+# Trained weights are provided at runtime via a bind mount, not baked into the image.
+app/ml/weights/*.h5
+app/ml/weights/*.keras
