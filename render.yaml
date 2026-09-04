@@ -1,0 +1,49 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+#
+# Backend + database only (the frontend isn't deployed yet — Milestone 9 scope).
+# Create this as a Blueprint in the Render dashboard (New -> Blueprint, pick this repo);
+# Render shows an editable preview of everything below before it creates anything.
+#
+# Two values must be filled in by hand in the Render dashboard after creation (they hold
+# a private-repo access token, so they're marked `sync: false` and never live in this file):
+#   MODEL_WEIGHTS_ASSET_URL  the GitHub Release asset API URL for the trained weights
+#   GH_TOKEN                 a token with read access to this repo, to fetch that asset
+# See the README "Deployment" section for exactly how to obtain and set these.
+
+databases:
+  - name: medlens-db
+    plan: free
+    databaseName: medlens
+    user: medlens
+    postgresMajorVersion: "16"
+
+services:
+  - name: medlens-backend
+    type: web
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: medlens-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: CORS_ORIGINS
+        value: '["http://localhost:5173","http://localhost:3000"]'
+      - key: MEDLENS_WEIGHTS_PATH
+        value: /app/app/ml/weights/model.weights.h5
+      - key: MODEL_WEIGHTS_ASSET_URL
+        value: ""
+        sync: false
+      - key: GH_TOKEN
+        value: ""
+        sync: false

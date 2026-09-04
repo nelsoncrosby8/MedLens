@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,17 @@ class Settings(BaseSettings):
 
     # SQLAlchemy URL. Defaults to the docker-compose / local Postgres role.
     DATABASE_URL: str = "postgresql+psycopg2://medlens:medlens@localhost:5432/medlens"
+
+    @field_validator("DATABASE_URL")
+    @classmethod
+    def _use_psycopg2_driver(cls, value: str) -> str:
+        """Hosting platforms (Render, Heroku, ...) hand out plain postgres:// /
+        postgresql:// URLs; SQLAlchemy needs the driver named explicitly."""
+        if value.startswith("postgres://"):
+            return "postgresql+psycopg2://" + value[len("postgres://") :]
+        if value.startswith("postgresql://"):
+            return "postgresql+psycopg2://" + value[len("postgresql://") :]
+        return value
 
     # JWT signing. The default is insecure and for local dev only — set a long random
     # value in the environment for anything shared or deployed.
