@@ -6,6 +6,10 @@ A full-stack web app where a user uploads a chest X-ray and receives an AI-assis
 pneumonia triage result (probability + Grad-CAM heatmap), with accounts and case history.
 This is a portfolio project — code quality, tests, and real deployability are the focus.
 
+**Live API:** https://medlens-backend-lrwv.onrender.com/docs (free tier — the first request
+after idle can be slow; see [Deployment](#deployment)). The frontend isn't deployed yet, so
+drive it via Swagger or point a local `npm run dev` at it.
+
 > **Disclaimer:** For educational/portfolio purposes only. Not a certified medical device
 > and not intended for clinical diagnosis.
 
@@ -22,8 +26,9 @@ Built in milestones (see `CLAUDEmedlens.md`). Done so far:
 - **7** `docker compose up` full local stack (db + backend + frontend, hot reload).
 - **8** GitHub Actions CI — ruff lint/format + pytest (backend), oxlint + build + Vitest
   (frontend) — on every PR and on `main`.
+- **9** Backend + database deployed live to Render (free tier); deploy-on-merge to `main`.
 
-Next: deployment, README polish.
+Next: README polish.
 
 ## Repository layout
 
@@ -116,6 +121,9 @@ TensorFlow needs headroom — if you're on Colima, give the VM some RAM:
 `colima start --memory 4`.
 
 ## Deployment
+
+**Live:** https://medlens-backend-lrwv.onrender.com — verified end-to-end (signup, login,
+`/predict` with real inference + Grad-CAM in ~3s, `/history`, and the 401/400 error paths).
 
 The **backend + database** are deployed to [Render](https://render.com) on the free tier via
 the `render.yaml` Blueprint at the repo root (the frontend isn't deployed yet). Render
