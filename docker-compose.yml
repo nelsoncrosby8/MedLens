@@ -34,6 +34,7 @@ services:
       SECRET_KEY: dev-only-insecure-change-me
       CORS_ORIGINS: '["http://localhost:5173"]'
       MEDLENS_WEIGHTS_PATH: /app/app/ml/weights/model.weights.h5
+      UVICORN_RELOAD: "1"
       # inotify doesn't cross the VM bind mount; make uvicorn --reload poll instead.
       WATCHFILES_FORCE_POLLING: "true"
     ports:
