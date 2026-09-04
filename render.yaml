@@ -1,14 +1,17 @@
 # Render Blueprint — https://render.com/docs/blueprint-spec
 #
-# Backend + database only (the frontend isn't deployed yet — Milestone 9 scope).
 # Create this as a Blueprint in the Render dashboard (New -> Blueprint, pick this repo);
-# Render shows an editable preview of everything below before it creates anything.
+# Render shows an editable preview of everything below before it creates anything. If the
+# Blueprint already exists, pushing changes here and clicking "Sync" in the dashboard applies
+# them (e.g. adding medlens-frontend below to an existing backend+db Blueprint).
 #
-# Two values must be filled in by hand in the Render dashboard after creation (they hold
-# a private-repo access token, so they're marked `sync: false` and never live in this file):
-#   MODEL_WEIGHTS_ASSET_URL  the GitHub Release asset API URL for the trained weights
-#   GH_TOKEN                 a token with read access to this repo, to fetch that asset
-# See the README "Deployment" section for exactly how to obtain and set these.
+# Two backend values must be filled in by hand in the Render dashboard after creation (they
+# hold a private-repo access token, so they're marked `sync: false` and never live in this
+# file): MODEL_WEIGHTS_ASSET_URL and GH_TOKEN. See the README "Deployment" section for how to
+# obtain and set these.
+#
+# medlens-backend's CORS_ORIGINS must include medlens-frontend's actual URL once Render
+# assigns it (it isn't known until the static site is first created) — see the README.
 
 databases:
   - name: medlens-db
@@ -45,3 +48,22 @@ services:
         sync: false
       - key: GH_TOKEN
         sync: false
+
+  - name: medlens-frontend
+    type: web
+    runtime: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: VITE_API_URL
+        value: https://medlens-backend-lrwv.onrender.com
+    routes:
+      # Client-side routing (react-router): let the SPA handle every path.
+      - type: rewrite
+        source: /*
+        destination: /index.html
