@@ -22,7 +22,9 @@ describe('api client', () => {
 
     expect(token.access_token).toBe('jwt-abc')
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('http://localhost:8000/auth/login')
+    // Match the path, not the origin: VITE_API_URL may be overridden by a local .env
+    // (e.g. pointed at the live deploy for manual testing), which is fine and expected.
+    expect(url).toMatch(/\/auth\/login$/)
     expect(init.method).toBe('POST')
     expect(init.body).toBeInstanceOf(URLSearchParams)
     const params = init.body as URLSearchParams
@@ -44,7 +46,7 @@ describe('api client', () => {
     await api.predict(file, 'jwt-xyz')
 
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
-    expect(url).toBe('http://localhost:8000/predict')
+    expect(url).toMatch(/\/predict$/)
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer jwt-xyz')
     expect(init.body).toBeInstanceOf(FormData)
     expect((init.body as FormData).get('file')).toBeInstanceOf(File)

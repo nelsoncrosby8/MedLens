@@ -170,14 +170,16 @@ TensorFlow needs headroom — if you're on Colima, give the VM some RAM:
 
 ## Deployment
 
-**Live:** https://medlens-backend-lrwv.onrender.com — verified end-to-end (signup, login,
-`/predict` with real inference + Grad-CAM in ~3s, `/history`, and the 401/400 error paths).
+**Live backend:** https://medlens-backend-lrwv.onrender.com — verified end-to-end (signup,
+login, `/predict` with real inference + Grad-CAM in ~3s, `/history`, and the 401/400 error
+paths). **Live frontend:** `medlens-frontend` static site on Render (URL filled in once
+deployed — see below).
 
-The **backend + database** are deployed to [Render](https://render.com) on the free tier via
-the `render.yaml` Blueprint at the repo root (the frontend isn't deployed yet). Render
-auto-deploys on every push to `main`.
+Both are deployed to [Render](https://render.com) via the `render.yaml` Blueprint at the repo
+root: `medlens-backend` (Docker web service) + `medlens-db` (Postgres) + `medlens-frontend`
+(static site). Render auto-deploys everything on every push to `main`.
 
-**Free-tier tradeoffs, going in with eyes open:**
+**Backend free-tier tradeoffs, going in with eyes open:**
 - The web service spins down after 15 min idle; the next request pays a cold start
   (Render's own ~1 min, *plus* TensorFlow import/model load on top).
 - Free instances get 512 MB RAM / 0.1 vCPU — tight for TensorFlow. It may be slow; it could
@@ -186,10 +188,12 @@ auto-deploys on every push to `main`.
   14-day warned grace period first). This is a demo deployment, not a durable one — treat
   any data in it as disposable, and expect to recreate the Blueprint periodically.
 
-**One-time setup:**
+The **frontend static site has none of those tradeoffs** — Render's free static hosting is
+CDN-served, has no cold start and no time limit.
+
+**One-time backend setup:**
 1. In Render: **New → Blueprint**, point it at this repo. Render parses `render.yaml` and
-   shows an editable preview of the `medlens-backend` web service and `medlens-db` database
-   — confirm both on the **Free** plan and create them.
+   shows an editable preview of the services — confirm the **Free** plan and create them.
 2. The trained weights aren't in git (see above), so the container fetches them from a
    [GitHub Release asset](https://github.com/nelsoncrosby8/MedLens/releases/tag/weights-v1)
    at startup — `docker-entrypoint.sh` does this before running migrations. Since the repo is
@@ -206,7 +210,17 @@ auto-deploys on every push to `main`.
    `alembic upgrade head`, then uvicorn starts. Check `<your-service>.onrender.com/health`
    and `/docs`.
 
-To redeploy after that, just merge to `main` — no extra steps.
+**One-time frontend setup:**
+1. Same Blueprint — Render builds `medlens-frontend` with `npm ci && npm run build` (in
+   `frontend/`) and serves `frontend/dist` from its CDN. `VITE_API_URL` is baked in at build
+   time, pointed at the live backend.
+2. Render assigns the static site's URL only once it's created, so `medlens-backend`'s
+   `CORS_ORIGINS` can't include it ahead of time. After the frontend is live, add its origin
+   to `CORS_ORIGINS` in `render.yaml` and merge — the backend redeploys with it allowed.
+3. React Router needs every path to fall through to `index.html` client-side; `render.yaml`'s
+   `routes` rewrite (`/* -> /index.html`) on the static site handles that.
+
+To redeploy either service after that, just merge to `main` — no extra steps.
 
 ## Data
 
