@@ -10,8 +10,6 @@
 # file): MODEL_WEIGHTS_ASSET_URL and GH_TOKEN. See the README "Deployment" section for how to
 # obtain and set these.
 #
-# medlens-backend's CORS_ORIGINS must include medlens-frontend's actual URL once Render
-# assigns it (it isn't known until the static site is first created) — see the README.
 
 databases:
   - name: medlens-db
@@ -41,7 +39,7 @@ services:
       - key: ACCESS_TOKEN_EXPIRE_MINUTES
         value: "30"
       - key: CORS_ORIGINS
-        value: '["http://localhost:5173","http://localhost:3000"]'
+        value: '["https://medlens-frontend.onrender.com","http://localhost:5173","http://localhost:3000"]'
       - key: MEDLENS_WEIGHTS_PATH
         value: /app/app/ml/weights/model.weights.h5
       - key: MODEL_WEIGHTS_ASSET_URL

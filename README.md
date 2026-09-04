@@ -1,6 +1,7 @@
 # MedLens
 
 [![CI](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml/badge.svg)](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml)
+[![Live App](https://img.shields.io/badge/live%20app-onrender.com-46E3B7)](https://medlens-frontend.onrender.com)
 [![Live API](https://img.shields.io/badge/live%20API-onrender.com-46E3B7)](https://medlens-backend-lrwv.onrender.com/docs)
 
 AI-assisted pneumonia triage from chest X-rays: upload an image, get a probability and a
@@ -12,9 +13,10 @@ live deployment.
 > **Disclaimer:** For educational/portfolio purposes only. Not a certified medical device
 > and not intended for clinical diagnosis.
 
-**Live API:** https://medlens-backend-lrwv.onrender.com/docs — free tier, so the first request
-after idle can be slow (see [Deployment](#deployment)). The frontend isn't deployed yet; run it
-locally against the live API or the full `docker compose` stack (see [Development](#development)).
+**Live app:** https://medlens-frontend.onrender.com — sign up and try it. It talks to the
+**live API** at https://medlens-backend-lrwv.onrender.com/docs, which is on a free tier, so the
+first request after idle can be slow (see [Deployment](#deployment)). Prefer to run it
+yourself? See [Development](#development).
 
 ## Features
 
@@ -30,11 +32,8 @@ locally against the live API or the full `docker compose` stack (see [Developmen
 flowchart TB
     User(("User / Browser"))
 
-    subgraph Local["Local dev — docker compose"]
-        FE["React + TypeScript (Vite)<br/>upload · results · history"]
-    end
-
-    subgraph Cloud["Render — deployed, free tier, auto-deploy on merge"]
+    subgraph Cloud["Render — free tier, auto-deploy on merge"]
+        FE["React + TypeScript (Vite)<br/>static site (CDN)<br/>upload · results · history"]
         API["FastAPI backend<br/>/auth · /predict · /history"]
         CNN["Custom CNN + Grad-CAM<br/>(TensorFlow / Keras)"]
         PG[("PostgreSQL")]
@@ -42,14 +41,14 @@ flowchart TB
         API --> PG
     end
 
-    User -->|"localhost:5173"| FE
+    User -->|"medlens-frontend.onrender.com"| FE
     User -->|"Swagger UI"| API
-    FE -->|"fetch + JWT bearer"| API
+    FE -->|"fetch + JWT bearer, CORS"| API
 ```
 
-The frontend (Milestone 6) runs locally today. The backend, its Grad-CAM-producing CNN, and
-Postgres (Milestone 9) are deployed to Render and auto-redeploy on every merge to `main`, via
-the `render.yaml` Blueprint — no separate CI/CD pipeline needed.
+Both halves are deployed to Render and auto-redeploy on every merge to `main`, via the single
+`render.yaml` Blueprint — no separate CI/CD pipeline needed. The same code also runs entirely
+locally via `docker compose` (see [Development](#development)).
 
 ## Screenshots
 
@@ -170,10 +169,9 @@ TensorFlow needs headroom — if you're on Colima, give the VM some RAM:
 
 ## Deployment
 
-**Live backend:** https://medlens-backend-lrwv.onrender.com — verified end-to-end (signup,
-login, `/predict` with real inference + Grad-CAM in ~3s, `/history`, and the 401/400 error
-paths). **Live frontend:** `medlens-frontend` static site on Render (URL filled in once
-deployed — see below).
+**Live frontend:** https://medlens-frontend.onrender.com. **Live backend:**
+https://medlens-backend-lrwv.onrender.com — verified end-to-end (signup, login, `/predict`
+with real inference + Grad-CAM in ~3s, `/history`, and the 401/400 error paths).
 
 Both are deployed to [Render](https://render.com) via the `render.yaml` Blueprint at the repo
 root: `medlens-backend` (Docker web service) + `medlens-db` (Postgres) + `medlens-frontend`
@@ -214,9 +212,10 @@ CDN-served, has no cold start and no time limit.
 1. Same Blueprint — Render builds `medlens-frontend` with `npm ci && npm run build` (in
    `frontend/`) and serves `frontend/dist` from its CDN. `VITE_API_URL` is baked in at build
    time, pointed at the live backend.
-2. Render assigns the static site's URL only once it's created, so `medlens-backend`'s
-   `CORS_ORIGINS` can't include it ahead of time. After the frontend is live, add its origin
-   to `CORS_ORIGINS` in `render.yaml` and merge — the backend redeploys with it allowed.
+2. Render only assigns the static site's URL once it's created, so `medlens-backend`'s
+   `CORS_ORIGINS` couldn't include it ahead of time — it's added in `render.yaml` now that the
+   URL is known (`https://medlens-frontend.onrender.com`); a future redeploy from scratch would
+   need this step repeated for a new frontend URL.
 3. React Router needs every path to fall through to `index.html` client-side; `render.yaml`'s
    `routes` rewrite (`/* -> /index.html`) on the static site handles that.
 
