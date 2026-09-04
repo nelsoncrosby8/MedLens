@@ -43,5 +43,7 @@ class PredictionRead(BaseModel):
     id: int
     label: str
     probability: float = Field(..., ge=0.0, le=1.0, description=_PROBABILITY_DESCRIPTION)
-    filename: str | None = Field(None, description="Original upload filename, if the client sent one.")
+    filename: str | None = Field(
+        None, description="Original upload filename, if the client sent one."
+    )
     created_at: datetime

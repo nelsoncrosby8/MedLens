@@ -24,6 +24,7 @@ matplotlib               # 'jet' colormap for the Grad-CAM overlay (app/ml/gradc
 # Used only by export_weights.py (balanced class weights).
 scikit-learn
 
-# Tests.
+# Dev / tests / lint.
 pytest
 httpx                    # Starlette/FastAPI TestClient transport
+ruff                     # lint + formatter (config in pyproject.toml)

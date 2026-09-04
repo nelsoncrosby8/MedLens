@@ -51,7 +51,9 @@ def client(db_session: Session) -> TestClient:
 def make_user(db_session: Session):
     """Factory that inserts a ``User`` row and returns it."""
 
-    def _make_user(email: str = "user@example.com", password: str = "correct horse battery") -> User:
+    def _make_user(
+        email: str = "user@example.com", password: str = "correct horse battery"
+    ) -> User:
         user = User(email=email, hashed_password=hash_password(password))
         db_session.add(user)
         db_session.commit()
