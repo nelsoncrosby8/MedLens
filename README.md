@@ -1,21 +1,69 @@
 # MedLens
 
 [![CI](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml/badge.svg)](https://github.com/nelsoncrosby8/MedLens/actions/workflows/ci.yml)
+[![Live API](https://img.shields.io/badge/live%20API-onrender.com-46E3B7)](https://medlens-backend-lrwv.onrender.com/docs)
 
-A full-stack web app where a user uploads a chest X-ray and receives an AI-assisted
-pneumonia triage result (probability + Grad-CAM heatmap), with accounts and case history.
-This is a portfolio project — code quality, tests, and real deployability are the focus.
-
-**Live API:** https://medlens-backend-lrwv.onrender.com/docs (free tier — the first request
-after idle can be slow; see [Deployment](#deployment)). The frontend isn't deployed yet, so
-drive it via Swagger or point a local `npm run dev` at it.
+AI-assisted pneumonia triage from chest X-rays: upload an image, get a probability and a
+Grad-CAM heatmap of what the model is looking at, with accounts and a case-history dashboard.
+A full-stack portfolio project — FastAPI + PostgreSQL backend, a custom CNN trained from
+scratch, a React/TypeScript frontend, Docker Compose for local dev, GitHub Actions CI, and a
+live deployment.
 
 > **Disclaimer:** For educational/portfolio purposes only. Not a certified medical device
 > and not intended for clinical diagnosis.
 
+**Live API:** https://medlens-backend-lrwv.onrender.com/docs — free tier, so the first request
+after idle can be slow (see [Deployment](#deployment)). The frontend isn't deployed yet; run it
+locally against the live API or the full `docker compose` stack (see [Development](#development)).
+
+## Features
+
+- **Upload & classify** — pick a chest X-ray, get `NORMAL` / `PNEUMONIA` plus a probability
+- **Grad-CAM heatmap** — a toggleable overlay showing which regions of the X-ray drove the call
+- **Accounts & history** — JWT auth; every prediction is saved to the caller's own case history
+- **Built like it ships** — Dockerized, lint + tested on every PR (CI), deployed live with
+  deploy-on-merge
+
+## Architecture
+
+```mermaid
+flowchart TB
+    User(("User / Browser"))
+
+    subgraph Local["Local dev — docker compose"]
+        FE["React + TypeScript (Vite)<br/>upload · results · history"]
+    end
+
+    subgraph Cloud["Render — deployed, free tier, auto-deploy on merge"]
+        API["FastAPI backend<br/>/auth · /predict · /history"]
+        CNN["Custom CNN + Grad-CAM<br/>(TensorFlow / Keras)"]
+        PG[("PostgreSQL")]
+        API --> CNN
+        API --> PG
+    end
+
+    User -->|"localhost:5173"| FE
+    User -->|"Swagger UI"| API
+    FE -->|"fetch + JWT bearer"| API
+```
+
+The frontend (Milestone 6) runs locally today. The backend, its Grad-CAM-producing CNN, and
+Postgres (Milestone 9) are deployed to Render and auto-redeploy on every merge to `main`, via
+the `render.yaml` Blueprint — no separate CI/CD pipeline needed.
+
+## Screenshots
+
+| Login | Upload |
+|---|---|
+| ![Login screen](docs/screenshots/login.png) | ![Upload screen](docs/screenshots/upload.png) |
+
+| Result with Grad-CAM heatmap | History dashboard |
+|---|---|
+| ![Result with heatmap](docs/screenshots/results.png) | ![History dashboard](docs/screenshots/history.png) |
+
 ## Status
 
-Built in milestones (see `CLAUDEmedlens.md`). Done so far:
+Built in milestones (see `CLAUDEmedlens.md`) — all ten complete:
 
 - **1–2** ML inference module + FastAPI service (`/health`, `/predict`).
 - **3** PostgreSQL models, Alembic migrations, JWT auth (`/auth/signup|login|me`).
@@ -27,8 +75,7 @@ Built in milestones (see `CLAUDEmedlens.md`). Done so far:
 - **8** GitHub Actions CI — ruff lint/format + pytest (backend), oxlint + build + Vitest
   (frontend) — on every PR and on `main`.
 - **9** Backend + database deployed live to Render (free tier); deploy-on-merge to `main`.
-
-Next: README polish.
+- **10** This README: architecture diagram, screenshots, disclaimer, and live URL up front.
 
 ## Repository layout
 
@@ -51,6 +98,7 @@ frontend/       React (Vite + TypeScript) app, organized by feature
     history/    prediction history dashboard
     components/ shared UI (nav, disclaimer footer, spinner, …)
 notebooks/      the original model-development notebook
+docs/screenshots/  images embedded above
 ```
 
 ## ML model
