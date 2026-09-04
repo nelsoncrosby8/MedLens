@@ -42,8 +42,6 @@ services:
       - key: MEDLENS_WEIGHTS_PATH
         value: /app/app/ml/weights/model.weights.h5
       - key: MODEL_WEIGHTS_ASSET_URL
-        value: ""
         sync: false
       - key: GH_TOKEN
-        value: ""
         sync: false
